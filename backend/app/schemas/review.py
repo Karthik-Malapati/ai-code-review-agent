@@ -38,3 +38,17 @@ class CodeReviewResponse(BaseModel):
     model: str
     summary: str
     issues: list[ReviewIssue]
+
+
+class FileReviewResult(BaseModel):
+    filename: str
+    language: str
+    summary: str
+    issues: list[ReviewIssue]
+
+
+class MultiFileReviewResponse(BaseModel):
+    model: str
+    total_files: int
+    total_issues: int
+    files: list[FileReviewResult]
