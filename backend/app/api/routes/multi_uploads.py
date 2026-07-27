@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 from typing import Annotated
 
@@ -33,6 +34,97 @@ ALLOWED_EXTENSIONS = {
 MAX_FILE_SIZE = 1_000_000
 MAX_FILES = 10
 
+# Limit the number of AI reviews running simultaneously.
+MAX_CONCURRENT_REVIEWS = 3
+
+review_semaphore = asyncio.Semaphore(MAX_CONCURRENT_REVIEWS)
+
+
+async def review_uploaded_file(
+    file: UploadFile,
+) -> FileReviewResult:
+    """
+    Validate and review one uploaded source-code file.
+    """
+
+    if not file.filename:
+        raise HTTPException(
+            status_code=400,
+            detail="Every uploaded file must have a filename.",
+        )
+
+    extension = Path(file.filename).suffix.lower()
+
+    if extension not in ALLOWED_EXTENSIONS:
+        allowed = ", ".join(sorted(ALLOWED_EXTENSIONS))
+
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Unsupported file type for {file.filename}. "
+                f"Allowed extensions: {allowed}"
+            ),
+        )
+
+    file_content = await file.read()
+
+    if len(file_content) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=413,
+            detail=(
+                f"{file.filename} is too large. "
+                "Maximum size is 1 MB per file."
+            ),
+        )
+
+    try:
+        code = file_content.decode("utf-8")
+    except UnicodeDecodeError as error:
+        raise HTTPException(
+            status_code=400,
+            detail=f"{file.filename} must contain UTF-8 text.",
+        ) from error
+
+    if not code.strip():
+        raise HTTPException(
+            status_code=400,
+            detail=f"{file.filename} is empty.",
+        )
+
+    language = ALLOWED_EXTENSIONS[extension]
+
+    try:
+        async with review_semaphore:
+            result = await review_code(
+                code=code,
+                language=language,
+            )
+
+    except ValueError as error:
+        raise HTTPException(
+            status_code=502,
+            detail=(
+                f"Invalid AI response while reviewing "
+                f"{file.filename}: {error}"
+            ),
+        ) from error
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                f"The AI review service failed while reviewing "
+                f"{file.filename}."
+            ),
+        ) from error
+
+    return FileReviewResult(
+        filename=file.filename,
+        language=language,
+        summary=result.summary,
+        issues=result.issues,
+    )
+
 
 @router.post(
     "/review",
@@ -42,7 +134,7 @@ async def review_multiple_files(
     files: Annotated[list[UploadFile], File()],
 ) -> MultiFileReviewResponse:
     """
-    Upload and review multiple source-code files.
+    Upload and review multiple source-code files concurrently.
     """
 
     if not files:
@@ -57,85 +149,12 @@ async def review_multiple_files(
             detail=f"A maximum of {MAX_FILES} files may be uploaded.",
         )
 
-    reviewed_files: list[FileReviewResult] = []
+    review_tasks = [
+        review_uploaded_file(file)
+        for file in files
+    ]
 
-    for file in files:
-        if not file.filename:
-            raise HTTPException(
-                status_code=400,
-                detail="Every uploaded file must have a filename.",
-            )
-
-        extension = Path(file.filename).suffix.lower()
-
-        if extension not in ALLOWED_EXTENSIONS:
-            allowed = ", ".join(sorted(ALLOWED_EXTENSIONS))
-
-            raise HTTPException(
-                status_code=400,
-                detail=(
-                    f"Unsupported file type for {file.filename}. "
-                    f"Allowed extensions: {allowed}"
-                ),
-            )
-
-        file_content = await file.read()
-
-        if len(file_content) > MAX_FILE_SIZE:
-            raise HTTPException(
-                status_code=413,
-                detail=(
-                    f"{file.filename} is too large. "
-                    "Maximum size is 1 MB per file."
-                ),
-            )
-
-        try:
-            code = file_content.decode("utf-8")
-        except UnicodeDecodeError as error:
-            raise HTTPException(
-                status_code=400,
-                detail=f"{file.filename} must contain UTF-8 text.",
-            ) from error
-
-        if not code.strip():
-            raise HTTPException(
-                status_code=400,
-                detail=f"{file.filename} is empty.",
-            )
-
-        language = ALLOWED_EXTENSIONS[extension]
-
-        try:
-            result = await review_code(
-                code=code,
-                language=language,
-            )
-        except ValueError as error:
-            raise HTTPException(
-                status_code=502,
-                detail=(
-                    f"Invalid AI response while reviewing "
-                    f"{file.filename}: {error}"
-                ),
-            ) from error
-        except Exception as error:
-            raise HTTPException(
-                status_code=503,
-                detail=(
-                    f"The AI review service failed while reviewing "
-                    f"{file.filename}."
-                ),
-            ) from error
-
-        reviewed_files.append(
-            FileReviewResult(
-                filename=file.filename,
-                language=language,
-                summary=result.summary,
-                issues=result.issues,
-            )
-        )
+    reviewed_files = await asyncio.gather(*review_tasks)
 
     total_issues = sum(
         len(file_result.issues)
