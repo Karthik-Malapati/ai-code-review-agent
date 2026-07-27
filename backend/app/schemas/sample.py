@@ -1,4 +1,16 @@
-def divide(a, b):
-    return a / b
+import os
 
-print(divide(10, 2))
+
+def login(username, password):
+    query = (
+        "SELECT * FROM users WHERE username = '"
+        + username
+        + "' AND password = '"
+        + password
+        + "'"
+    )
+
+    print("Password:", password)
+    os.system("echo " + username)
+
+    return query

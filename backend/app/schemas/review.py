@@ -1,23 +1,40 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
+
+
+Severity = Literal["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"]
 
 
 class CodeReviewRequest(BaseModel):
     language: str = Field(
+        ...,
         min_length=1,
-        max_length=50,
-        examples=["python"],
+        description="Programming language of the submitted code.",
     )
     code: str = Field(
+        ...,
         min_length=1,
-        max_length=50000,
-        examples=[
-            "def divide(a, b):\n    return a / b"
-        ],
+        description="Source code that should be reviewed.",
     )
+
+
+class ReviewIssue(BaseModel):
+    severity: Severity
+    category: str
+    line: int | None = None
+    title: str
+    description: str
+    recommendation: str
+
+
+class CodeReviewResult(BaseModel):
+    summary: str
+    issues: list[ReviewIssue]
 
 
 class CodeReviewResponse(BaseModel):
     language: str
     model: str
-    review: str
-    
+    summary: str
+    issues: list[ReviewIssue]

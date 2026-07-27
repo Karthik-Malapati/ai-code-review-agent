@@ -5,10 +5,12 @@ from fastapi import APIRouter, File, HTTPException, UploadFile
 from app.schemas.review import CodeReviewResponse
 from app.services.ai_reviewer import MODEL_NAME, review_code
 
+
 router = APIRouter(
     prefix="/api/uploads",
     tags=["File Upload Review"],
 )
+
 
 ALLOWED_EXTENSIONS = {
     ".py": "python",
@@ -23,14 +25,20 @@ ALLOWED_EXTENSIONS = {
     ".c": "c",
 }
 
-MAX_FILE_SIZE = 1_000_000  # Approximately 1 MB
+
+MAX_FILE_SIZE = 1_000_000
 
 
-@router.post("/review", response_model=CodeReviewResponse)
+@router.post(
+    "/review",
+    response_model=CodeReviewResponse,
+)
 async def review_uploaded_file(
     file: UploadFile = File(...),
 ) -> CodeReviewResponse:
-    """Upload a source-code file and receive an AI-generated review."""
+    """
+    Upload a source-code file and receive a structured AI review.
+    """
 
     if not file.filename:
         raise HTTPException(
@@ -72,13 +80,25 @@ async def review_uploaded_file(
 
     language = ALLOWED_EXTENSIONS[extension]
 
-    review = await review_code(
-        code=code,
-        language=language,
-    )
+    try:
+        result = await review_code(
+            code=code,
+            language=language,
+        )
+    except ValueError as error:
+        raise HTTPException(
+            status_code=502,
+            detail=str(error),
+        ) from error
+    except Exception as error:
+        raise HTTPException(
+            status_code=503,
+            detail="The AI review service is currently unavailable.",
+        ) from error
 
     return CodeReviewResponse(
         language=language,
         model=MODEL_NAME,
-        review=review,
+        summary=result.summary,
+        issues=result.issues,
     )
