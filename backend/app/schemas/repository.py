@@ -37,6 +37,20 @@ class RepositoryFileReview(BaseModel):
     issues: list[ReviewIssue]
 
 
+class RepositorySummary(BaseModel):
+    overall_quality: str
+    security_assessment: str
+    maintainability_assessment: str
+    top_risks: list[str]
+    top_recommendations: list[str]
+
+class SeverityCounts(BaseModel):
+    critical: int
+    high: int
+    medium: int
+    low: int
+
+
 class RepositoryReviewResponse(BaseModel):
     repository_url: str
     repository_name: str
@@ -44,4 +58,7 @@ class RepositoryReviewResponse(BaseModel):
     total_files_scanned: int
     total_files_reviewed: int
     total_issues: int
+    repository_score: int
+    severity_counts: SeverityCounts
+    repository_summary: RepositorySummary
     files: list[RepositoryFileReview]

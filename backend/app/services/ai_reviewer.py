@@ -4,6 +4,7 @@ from json import JSONDecodeError
 from ollama import AsyncClient
 from pydantic import ValidationError
 
+from app.schemas.repository import RepositorySummary
 from app.schemas.review import CodeReviewResult
 
 OLLAMA_HOST = "http://localhost:11434"
@@ -133,3 +134,74 @@ Review the following source code:
         raise ValueError(
             f"The AI response did not match the required structure: {json_content}"
         ) from error
+
+
+async def summarize_repository(
+    file_reviews: list[dict],
+) -> RepositorySummary:
+    """
+    Generate an overall repository-level summary
+    from individual file review results.
+    """
+
+    prompt = f"""
+You are a senior software engineer performing a repository-wide code review.
+
+Analyze the following file review results and produce one overall repository summary.
+
+Return ONLY valid JSON using exactly this structure:
+
+{{
+  "overall_quality": "string",
+  "security_assessment": "string",
+  "maintainability_assessment": "string",
+  "top_risks": [
+    "string"
+  ],
+  "top_recommendations": [
+    "string"
+  ]
+}}
+
+Rules:
+- Do not include markdown.
+- Do not include code fences.
+- Do not add text outside the JSON.
+- Keep top_risks to a maximum of 5 items.
+- Keep top_recommendations to a maximum of 5 items.
+- Base the summary only on the supplied review results.
+
+File review results:
+
+{json.dumps(file_reviews, indent=2)}
+"""
+
+    response = await client.chat(
+        model=MODEL_NAME,
+        messages=[
+            {
+                "role": "user",
+                "content": prompt,
+            }
+        ],
+    )
+
+    raw_response = response["message"]["content"].strip()
+
+    if raw_response.startswith("```json"):
+        raw_response = raw_response.removeprefix("```json").strip()
+
+    if raw_response.startswith("```"):
+        raw_response = raw_response.removeprefix("```").strip()
+
+    if raw_response.endswith("```"):
+        raw_response = raw_response.removesuffix("```").strip()
+
+    try:
+        parsed_response = json.loads(raw_response)
+    except json.JSONDecodeError as error:
+        raise ValueError(
+            f"The AI returned an invalid repository summary: {raw_response}"
+        ) from error
+
+    return RepositorySummary.model_validate(parsed_response)

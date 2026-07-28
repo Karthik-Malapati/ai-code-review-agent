@@ -11,8 +11,13 @@ from app.schemas.repository import (
     RepositoryReviewRequest,
     RepositoryReviewResponse,
     RepositoryScanResponse,
+    SeverityCounts,
 )
-from app.services.ai_reviewer import MODEL_NAME, review_code
+from app.services.ai_reviewer import (
+    MODEL_NAME,
+    review_code,
+    summarize_repository,
+)
 from app.services.repository_scanner import (
     RepositoryCloneError,
     clone_repository,
@@ -169,6 +174,10 @@ async def review_repository_file(
     "/review",
     response_model=RepositoryReviewResponse,
 )
+@router.post(
+    "/review",
+    response_model=RepositoryReviewResponse,
+)
 async def review_github_repository(
     request: RepositoryReviewRequest,
 ) -> RepositoryReviewResponse:
@@ -210,6 +219,50 @@ async def review_github_repository(
                 len(file_review.issues) for file_review in reviewed_files
             )
 
+            severity_counts = SeverityCounts(
+                critical=0,
+                high=0,
+                medium=0,
+                low=0,
+            )
+
+            for file_review in reviewed_files:
+                for issue in file_review.issues:
+                    severity = issue.severity.lower()
+
+                    if severity == "critical":
+                        severity_counts.critical += 1
+                    elif severity == "high":
+                        severity_counts.high += 1
+                    elif severity == "medium":
+                        severity_counts.medium += 1
+                    elif severity == "low":
+                        severity_counts.low += 1
+
+            repository_score = 100
+
+            repository_score -= severity_counts.critical * 20
+            repository_score -= severity_counts.high * 10
+            repository_score -= severity_counts.medium * 5
+            repository_score -= severity_counts.low * 2
+
+            repository_score = max(
+                0,
+                min(100, repository_score),
+            )
+
+            summary_input = [
+                {
+                    "path": file_review.path,
+                    "language": file_review.language,
+                    "summary": file_review.summary,
+                    "issues": [issue.model_dump() for issue in file_review.issues],
+                }
+                for file_review in reviewed_files
+            ]
+
+            repository_summary = await summarize_repository(summary_input)
+
             return RepositoryReviewResponse(
                 repository_url=repository_url,
                 repository_name=get_repository_name(repository_url),
@@ -217,6 +270,9 @@ async def review_github_repository(
                 total_files_scanned=total_files_scanned,
                 total_files_reviewed=len(reviewed_files),
                 total_issues=total_issues,
+                repository_score=repository_score,
+                severity_counts=severity_counts,
+                repository_summary=repository_summary,
                 files=reviewed_files,
             )
 
@@ -235,5 +291,5 @@ async def review_github_repository(
     except Exception as error:
         raise HTTPException(
             status_code=503,
-            detail=(f"The repository AI review failed: {error}"),
+            detail=f"The repository AI review failed: {error}",
         ) from error
