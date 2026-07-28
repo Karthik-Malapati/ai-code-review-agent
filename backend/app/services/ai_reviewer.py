@@ -1,4 +1,5 @@
 import json
+import os
 from json import JSONDecodeError
 
 from ollama import AsyncClient
@@ -7,8 +8,15 @@ from pydantic import ValidationError
 from app.schemas.repository import RepositorySummary
 from app.schemas.review import CodeReviewResult
 
-OLLAMA_HOST = "http://localhost:11434"
-MODEL_NAME = "qwen2.5-coder:7b"
+OLLAMA_HOST = os.getenv(
+    "OLLAMA_HOST",
+    "http://localhost:11434",
+)
+
+MODEL_NAME = os.getenv(
+    "OLLAMA_MODEL",
+    "qwen2.5-coder:7b",
+)
 
 client = AsyncClient(host=OLLAMA_HOST)
 

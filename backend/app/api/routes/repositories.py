@@ -1,4 +1,5 @@
 import asyncio
+import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -31,8 +32,9 @@ router = APIRouter(
 )
 
 
-MAX_REPOSITORY_FILES = 10
-MAX_CONCURRENT_REVIEWS = 3
+MAX_REPOSITORY_FILES = int(os.getenv("MAX_REPOSITORY_FILES", "10"))
+
+MAX_CONCURRENT_REVIEWS = int(os.getenv("MAX_CONCURRENT_REVIEWS", "3"))
 
 repository_review_semaphore = asyncio.Semaphore(MAX_CONCURRENT_REVIEWS)
 
