@@ -3,7 +3,6 @@ from fastapi import APIRouter, HTTPException
 from app.schemas.review import CodeReviewRequest, CodeReviewResponse
 from app.services.ai_reviewer import MODEL_NAME, review_code
 
-
 router = APIRouter(
     prefix="/api/reviews",
     tags=["Code Review"],

@@ -1,10 +1,10 @@
 from pathlib import Path
+from typing import Annotated
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from app.schemas.review import CodeReviewResponse
 from app.services.ai_reviewer import MODEL_NAME, review_code
-
 
 router = APIRouter(
     prefix="/api/uploads",
@@ -34,7 +34,7 @@ MAX_FILE_SIZE = 1_000_000
     response_model=CodeReviewResponse,
 )
 async def review_uploaded_file(
-    file: UploadFile = File(...),
+    file: Annotated[UploadFile, File()],
 ) -> CodeReviewResponse:
     """
     Upload a source-code file and receive a structured AI review.

@@ -10,7 +10,6 @@ from app.schemas.review import (
 )
 from app.services.ai_reviewer import MODEL_NAME, review_code
 
-
 router = APIRouter(
     prefix="/api/multi-uploads",
     tags=["Multi-File Review"],
@@ -71,10 +70,7 @@ async def review_uploaded_file(
     if len(file_content) > MAX_FILE_SIZE:
         raise HTTPException(
             status_code=413,
-            detail=(
-                f"{file.filename} is too large. "
-                "Maximum size is 1 MB per file."
-            ),
+            detail=(f"{file.filename} is too large. Maximum size is 1 MB per file."),
         )
 
     try:
@@ -103,19 +99,13 @@ async def review_uploaded_file(
     except ValueError as error:
         raise HTTPException(
             status_code=502,
-            detail=(
-                f"Invalid AI response while reviewing "
-                f"{file.filename}: {error}"
-            ),
+            detail=(f"Invalid AI response while reviewing {file.filename}: {error}"),
         ) from error
 
     except Exception as error:
         raise HTTPException(
             status_code=503,
-            detail=(
-                f"The AI review service failed while reviewing "
-                f"{file.filename}."
-            ),
+            detail=(f"The AI review service failed while reviewing {file.filename}."),
         ) from error
 
     return FileReviewResult(
@@ -149,17 +139,11 @@ async def review_multiple_files(
             detail=f"A maximum of {MAX_FILES} files may be uploaded.",
         )
 
-    review_tasks = [
-        review_uploaded_file(file)
-        for file in files
-    ]
+    review_tasks = [review_uploaded_file(file) for file in files]
 
     reviewed_files = await asyncio.gather(*review_tasks)
 
-    total_issues = sum(
-        len(file_result.issues)
-        for file_result in reviewed_files
-    )
+    total_issues = sum(len(file_result.issues) for file_result in reviewed_files)
 
     return MultiFileReviewResponse(
         model=MODEL_NAME,

@@ -6,7 +6,6 @@ from pydantic import ValidationError
 
 from app.schemas.review import CodeReviewResult
 
-
 OLLAMA_HOST = "http://localhost:11434"
 MODEL_NAME = "qwen2.5-coder:7b"
 
@@ -75,13 +74,12 @@ def extract_json_content(content: str) -> str:
     cleaned = content.strip()
 
     if cleaned.startswith("```json"):
-        cleaned = cleaned[len("```json"):]
+        cleaned = cleaned[len("```json") :]
 
     elif cleaned.startswith("```"):
-        cleaned = cleaned[len("```"):]
+        cleaned = cleaned[len("```") :]
 
-    if cleaned.endswith("```"):
-        cleaned = cleaned[:-3]
+    cleaned = cleaned.removesuffix("```")
 
     return cleaned.strip()
 
@@ -133,6 +131,5 @@ Review the following source code:
         return CodeReviewResult.model_validate(parsed_content)
     except ValidationError as error:
         raise ValueError(
-            f"The AI response did not match the required structure: "
-            f"{json_content}"
+            f"The AI response did not match the required structure: {json_content}"
         ) from error

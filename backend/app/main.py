@@ -1,19 +1,24 @@
 from fastapi import FastAPI
 
-from app.api.routes.health import router as health_router
-from app.api.routes.multi_uploads import router as multi_uploads_router
-from app.api.routes.reviews import router as reviews_router
-from app.api.routes.uploads import router as uploads_router
-
+from app.api.routes import (
+    health,
+    multi_uploads,
+    repositories,
+    reviews,
+    uploads,
+)
 
 app = FastAPI(
     title="AI Code Review Agent",
-    description="A local AI-powered code review API using FastAPI and Ollama.",
+    description=(
+        "An AI-powered code review service using FastAPI, Ollama, and Qwen2.5-Coder."
+    ),
     version="1.0.0",
 )
 
 
-app.include_router(health_router)
-app.include_router(reviews_router)
-app.include_router(uploads_router)
-app.include_router(multi_uploads_router)
+app.include_router(health.router)
+app.include_router(reviews.router)
+app.include_router(uploads.router)
+app.include_router(multi_uploads.router)
+app.include_router(repositories.router)
