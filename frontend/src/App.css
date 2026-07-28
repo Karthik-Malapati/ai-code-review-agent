@@ -1,0 +1,148 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f4f6f8;
+  color: #1f2937;
+}
+
+.app {
+  min-height: 100vh;
+}
+
+header {
+  padding: 48px 24px;
+  text-align: center;
+  background: #111827;
+  color: white;
+}
+
+header h1 {
+  margin: 0 0 12px;
+  font-size: 40px;
+}
+
+header p {
+  max-width: 720px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+main {
+  width: min(1100px, 92%);
+  margin: 32px auto;
+}
+
+.analyzer,
+.results {
+  background: white;
+  padding: 28px;
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  margin-bottom: 28px;
+}
+
+.input-group {
+  display: flex;
+  gap: 12px;
+}
+
+.input-group input {
+  flex: 1;
+  padding: 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.input-group button {
+  padding: 14px 22px;
+  border: none;
+  border-radius: 8px;
+  background: #2563eb;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.input-group button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.loading {
+  margin-top: 16px;
+}
+
+.error {
+  margin-top: 16px;
+  padding: 12px;
+  background: #fee2e2;
+  border-radius: 8px;
+}
+
+.score-card {
+  margin: 24px 0;
+  padding: 24px;
+  text-align: center;
+  background: #f9fafb;
+  border-radius: 12px;
+}
+
+.score-card span {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.score-card strong {
+  font-size: 42px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.stats div {
+  background: #f9fafb;
+  padding: 18px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.stats strong {
+  display: block;
+  font-size: 28px;
+}
+
+.stats span {
+  font-size: 14px;
+}
+
+.summary h3 {
+  margin-top: 0;
+}
+
+.summary h4 {
+  margin-bottom: 6px;
+}
+
+.summary p,
+.summary li {
+  line-height: 1.6;
+}
+
+@media (max-width: 700px) {
+  .input-group {
+    flex-direction: column;
+  }
+
+  header h1 {
+    font-size: 32px;
+  }
+}
