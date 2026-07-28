@@ -6,9 +6,7 @@ from app.schemas.review import ReviewIssue
 class RepositoryReviewRequest(BaseModel):
     repository_url: HttpUrl = Field(
         description="Public GitHub repository HTTPS URL",
-        examples=[
-            "https://github.com/Karthik-Malapati/ai-code-review-agent"
-        ],
+        examples=["https://github.com/Karthik-Malapati/ai-code-review-agent"],
     )
 
 
@@ -43,6 +41,7 @@ class RepositorySummary(BaseModel):
     maintainability_assessment: str
     top_risks: list[str]
     top_recommendations: list[str]
+
 
 class SeverityCounts(BaseModel):
     critical: int

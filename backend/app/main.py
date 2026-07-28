@@ -9,12 +9,10 @@ from app.api.routes import (
     uploads,
 )
 
-
 app = FastAPI(
     title="AI Code Review Agent",
     description=(
-        "An AI-powered code review service using FastAPI, "
-        "Ollama, and Qwen2.5-Coder."
+        "An AI-powered code review service using FastAPI, Ollama, and Qwen2.5-Coder."
     ),
     version="1.0.0",
 )
