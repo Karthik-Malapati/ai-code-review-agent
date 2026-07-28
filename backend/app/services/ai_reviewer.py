@@ -2,7 +2,7 @@ import json
 import os
 from json import JSONDecodeError
 
-from ollama import AsyncClient
+from ollama import AsyncClient, ResponseError
 from pydantic import ValidationError
 
 from app.schemas.repository import RepositorySummary
@@ -18,7 +18,10 @@ MODEL_NAME = os.getenv(
     "qwen2.5-coder:7b",
 )
 
-client = AsyncClient(host=OLLAMA_HOST)
+client = AsyncClient(
+    host=OLLAMA_HOST,
+    timeout=120.0,
+)
 
 
 async def review_code(
@@ -26,7 +29,7 @@ async def review_code(
     language: str,
 ) -> CodeReviewResult:
     """
-    Review source code with the local Ollama model.
+    Review source code using the local Ollama model.
     """
 
     prompt = f"""
@@ -62,16 +65,23 @@ Code:
 {code}
 """
 
-    response = await client.chat(
-        model=MODEL_NAME,
-        messages=[
-            {
-                "role": "user",
-                "content": prompt,
-            }
-        ],
-        format="json",
-    )
+    try:
+        response = await client.chat(
+            model=MODEL_NAME,
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt,
+                }
+            ],
+            format="json",
+        )
+    except ResponseError as error:
+        raise RuntimeError(f"Ollama returned an error: {error}") from error
+    except TimeoutError as error:
+        raise RuntimeError("Ollama timed out while reviewing the code.") from error
+    except Exception as error:
+        raise RuntimeError("Unable to connect to the Ollama service.") from error
 
     raw_response = response["message"]["content"].strip()
 
@@ -100,6 +110,17 @@ Code:
     try:
         return CodeReviewResult.model_validate(parsed_response)
     except ValidationError as error:
+        print("\n===== INVALID AI RESPONSE =====")
+        print(
+            json.dumps(
+                parsed_response,
+                indent=2,
+            )
+        )
+        print("\n===== PYDANTIC VALIDATION ERROR =====")
+        print(error)
+        print("====================================\n")
+
         raise ValueError("The AI returned JSON with an invalid structure.") from error
 
 
@@ -107,8 +128,7 @@ async def summarize_repository(
     file_reviews: list[dict],
 ) -> RepositorySummary:
     """
-    Generate an overall repository-level summary
-    from individual file review results.
+    Generate an overall repository-level summary.
     """
 
     prompt = f"""
@@ -144,16 +164,25 @@ File review results:
 {json.dumps(file_reviews, indent=2)}
 """
 
-    response = await client.chat(
-        model=MODEL_NAME,
-        messages=[
-            {
-                "role": "user",
-                "content": prompt,
-            }
-        ],
-        format="json",
-    )
+    try:
+        response = await client.chat(
+            model=MODEL_NAME,
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt,
+                }
+            ],
+            format="json",
+        )
+    except ResponseError as error:
+        raise RuntimeError(f"Ollama returned an error: {error}") from error
+    except TimeoutError as error:
+        raise RuntimeError(
+            "Ollama timed out while generating the repository summary."
+        ) from error
+    except Exception as error:
+        raise RuntimeError("Unable to connect to the Ollama service.") from error
 
     raw_response = response["message"]["content"].strip()
 

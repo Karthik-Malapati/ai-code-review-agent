@@ -35,7 +35,7 @@ router = APIRouter(
 MAX_REPOSITORY_FILES = int(os.getenv("MAX_REPOSITORY_FILES", "10"))
 
 MAX_CONCURRENT_REVIEWS = int(os.getenv("MAX_CONCURRENT_REVIEWS", "3"))
-
+MAX_REPOSITORY_FILE_SIZE = 500_000
 repository_review_semaphore = asyncio.Semaphore(MAX_CONCURRENT_REVIEWS)
 
 
@@ -144,6 +144,16 @@ async def review_repository_file(
     """
     Read and review one repository source file.
     """
+
+    file_size = file_path.stat().st_size
+
+    if file_size > MAX_REPOSITORY_FILE_SIZE:
+        return RepositoryFileReview(
+            path=str(file_path.relative_to(repository_path)),
+            language=language,
+            summary=("File skipped because it exceeds the review size limit."),
+            issues=[],
+        )
 
     try:
         code = file_path.read_text(encoding="utf-8")
