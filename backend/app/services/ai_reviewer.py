@@ -1,22 +1,17 @@
 import json
-import os
 from json import JSONDecodeError
 
 from ollama import AsyncClient, ResponseError
 from pydantic import ValidationError
 
+from app.core.config import (
+    OLLAMA_HOST,
+    OLLAMA_MODEL,
+)
 from app.schemas.repository import RepositorySummary
 from app.schemas.review import CodeReviewResult
 
-OLLAMA_HOST = os.getenv(
-    "OLLAMA_HOST",
-    "http://localhost:11434",
-)
-
-MODEL_NAME = os.getenv(
-    "OLLAMA_MODEL",
-    "qwen2.5-coder:7b",
-)
+MODEL_NAME = OLLAMA_MODEL
 
 client = AsyncClient(
     host=OLLAMA_HOST,

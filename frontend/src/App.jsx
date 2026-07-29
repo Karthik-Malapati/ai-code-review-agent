@@ -1,5 +1,8 @@
 import { useState } from "react";
 import "./App.css";
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  "http://127.0.0.1:8000";
 const isValidGitHubUrl = (url) => {
   try {
     const parsedUrl = new URL(url);
@@ -40,7 +43,7 @@ if (!isValidGitHubUrl(repositoryUrl.trim())) {
 
     try {
 const response = await fetch(
-  "http://127.0.0.1:8000/api/repositories/review",
+  `${API_URL}/api/repositories/review`,
   {
     method: "POST",
     headers: {

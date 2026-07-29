@@ -1,10 +1,13 @@
 import asyncio
-import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from fastapi import APIRouter, HTTPException
 
+from app.core.config import (
+    MAX_CONCURRENT_REVIEWS,
+    MAX_REPOSITORY_FILES,
+)
 from app.schemas.repository import (
     RepositoryCloneResponse,
     RepositoryFileInfo,
@@ -32,9 +35,9 @@ router = APIRouter(
 )
 
 
-MAX_REPOSITORY_FILES = int(os.getenv("MAX_REPOSITORY_FILES", "10"))
+MAX_REPOSITORY_FILE_SIZE = 500_000
 
-MAX_CONCURRENT_REVIEWS = int(os.getenv("MAX_CONCURRENT_REVIEWS", "3"))
+repository_review_semaphore = asyncio.Semaphore(MAX_CONCURRENT_REVIEWS)
 MAX_REPOSITORY_FILE_SIZE = 500_000
 repository_review_semaphore = asyncio.Semaphore(MAX_CONCURRENT_REVIEWS)
 
