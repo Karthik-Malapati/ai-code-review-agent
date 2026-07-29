@@ -18,6 +18,15 @@ app = FastAPI(
 )
 
 
+@app.get("/")
+async def root():
+    return {
+        "service": "AI Code Review Agent",
+        "status": "running",
+        "docs": "/docs",
+    }
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
