@@ -500,3 +500,32 @@ input {
     grid-template-columns: 1fr;
   }
 }
+.error strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.error p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.retry-button {
+  margin-top: 12px;
+  padding: 9px 14px;
+  border: none;
+  border-radius: 8px;
+  background: #a62d2d;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.retry-button:hover:not(:disabled) {
+  background: #842323;
+}
+
+.retry-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

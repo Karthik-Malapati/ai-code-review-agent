@@ -1,6 +1,18 @@
 import { useState } from "react";
 import "./App.css";
+const isValidGitHubUrl = (url) => {
+  try {
+    const parsedUrl = new URL(url);
 
+    return (
+      parsedUrl.protocol === "https:" &&
+      ["github.com", "www.github.com"].includes(parsedUrl.hostname) &&
+      parsedUrl.pathname.split("/").filter(Boolean).length === 2
+    );
+  } catch {
+    return false;
+  }
+};
 function App() {
   const [repositoryUrl, setRepositoryUrl] = useState("");
   const [loading, setLoading] = useState(false);
@@ -10,9 +22,16 @@ function App() {
 
   const analyzeRepository = async () => {
     if (!repositoryUrl.trim()) {
-      setError("Please enter a GitHub repository URL.");
-      return;
-    }
+  setError("Please enter a GitHub repository URL.");
+  return;
+}
+
+if (!isValidGitHubUrl(repositoryUrl.trim())) {
+  setError(
+    "Please enter a valid public GitHub repository URL, for example: https://github.com/user/project"
+  );
+  return;
+}
 
     setLoading(true);
     setError("");
@@ -20,18 +39,18 @@ function App() {
     setExpandedFiles({});
 
     try {
-      const response = await fetch(
-        "http://127.0.0.1:8000/api/repositories/review",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            repository_url: repositoryUrl,
-          }),
-        }
-      );
+const response = await fetch(
+  "http://127.0.0.1:8000/api/repositories/review",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      repository_url: repositoryUrl.trim(),
+    }),
+  }
+);
 
       const data = await response.json();
 
@@ -43,8 +62,14 @@ function App() {
 
       setResult(data);
     } catch (err) {
-      setError(err.message);
-    } finally {
+  if (err instanceof TypeError) {
+    setError(
+      "Unable to reach the backend service. Make sure FastAPI is running on port 8000."
+    );
+  } else {
+    setError(err.message || "Repository analysis failed.");
+  }
+} finally {
       setLoading(false);
     }
   };
@@ -87,9 +112,12 @@ function App() {
               type="url"
               placeholder="https://github.com/username/repository"
               value={repositoryUrl}
-              onChange={(event) =>
-                setRepositoryUrl(event.target.value)
-              }
+              onChange={(event) => {
+  setRepositoryUrl(event.target.value);
+  if (error) {
+    setError("");
+  }
+}}
               onKeyDown={(event) => {
                 if (event.key === "Enter" && !loading) {
                   analyzeRepository();
@@ -118,7 +146,20 @@ function App() {
             </div>
           )}
 
-          {error && <div className="error">{error}</div>}
+          {error && (
+  <div className="error">
+    <strong>Analysis failed</strong>
+    <p>{error}</p>
+
+    <button
+      className="retry-button"
+      onClick={analyzeRepository}
+      disabled={loading}
+    >
+      Try Again
+    </button>
+  </div>
+)}
         </section>
 
         {result && (

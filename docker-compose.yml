@@ -1,0 +1,24 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: ai-code-review-backend
+    environment:
+      OLLAMA_HOST: http://host.docker.internal:11434
+      OLLAMA_MODEL: qwen2.5-coder:7b
+      MAX_REPOSITORY_FILES: 10
+      MAX_CONCURRENT_REVIEWS: 3
+      FRONTEND_URL: http://localhost:3000
+    ports:
+      - "8000:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: ai-code-review-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
