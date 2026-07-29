@@ -358,6 +358,17 @@ Potential future enhancements include:
 - Configurable AI models
 - Expanded security scanning
 
+## Development Workflow
+
+This project follows a branch-based development workflow:
+
+1. Create a feature branch from `main`.
+2. Implement and test changes locally.
+3. Push the feature branch to GitHub.
+4. Open a pull request into `main`.
+5. GitHub Actions runs backend, frontend, and Docker CI checks.
+6. Merge the pull request after all required checks pass.
+
 ## Author
 
 Built as a full-stack AI engineering project demonstrating practical experience with AI integration, backend development, frontend development, testing, Docker, and CI/CD.
