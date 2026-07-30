@@ -48,12 +48,74 @@ async def call_ai(prompt: str) -> str:
                 }
             ],
             response_format={
-                "type": "json_object",
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "code_review",
+                    "strict": True,
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "summary": {
+                                "type": "string",
+                            },
+                            "issues": {
+                                "type": "array",
+                                "maxItems": 3,
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "severity": {
+                                            "type": "string",
+                                            "enum": [
+                                                "CRITICAL",
+                                                "HIGH",
+                                                "MEDIUM",
+                                                "LOW",
+                                                "INFO",
+                                            ],
+                                        },
+                                        "category": {
+                                            "type": "string",
+                                        },
+                                        "line": {
+                                            "type": [
+                                                "integer",
+                                                "null",
+                                            ],
+                                        },
+                                        "title": {
+                                            "type": "string",
+                                        },
+                                        "description": {
+                                            "type": "string",
+                                        },
+                                        "recommendation": {
+                                            "type": "string",
+                                        },
+                                    },
+                                    "required": [
+                                        "severity",
+                                        "category",
+                                        "line",
+                                        "title",
+                                        "description",
+                                        "recommendation",
+                                    ],
+                                    "additionalProperties": False,
+                                },
+                            },
+                        },
+                        "required": [
+                            "summary",
+                            "issues",
+                        ],
+                        "additionalProperties": False,
+                    },
+                },
             },
             temperature=0.1,
             max_tokens=1200,
         )
-        
 
         content = response.choices[0].message.content
 
