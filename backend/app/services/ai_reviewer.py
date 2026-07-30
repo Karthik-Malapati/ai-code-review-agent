@@ -50,7 +50,10 @@ async def call_ai(prompt: str) -> str:
             response_format={
                 "type": "json_object",
             },
+            temperature=0.1,
+            max_tokens=1200,
         )
+        
 
         content = response.choices[0].message.content
 
@@ -133,6 +136,11 @@ Rules:
 - Do not include code fences.
 - Do not include explanations outside the JSON.
 - If there are no issues, return an empty issues list.
+- Return at most 3 issues.
+- Keep each description under 40 words.
+- Keep each recommendation under 30 words.
+- Do not return metadata or any fields not listed in the schema.
+- Never truncate strings.
 
 Code:
 
