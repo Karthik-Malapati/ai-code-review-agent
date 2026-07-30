@@ -55,13 +55,25 @@ const response = await fetch(
   }
 );
 
-      const data = await response.json();
+      const contentType = response.headers.get("content-type");
 
-      if (!response.ok) {
-        throw new Error(
-          data.detail || "Repository analysis failed."
-        );
-      }
+let data;
+
+if (contentType && contentType.includes("application/json")) {
+  data = await response.json();
+} else {
+  const text = await response.text();
+
+  throw new Error(
+    text || `Backend returned status ${response.status}.`
+  );
+}
+
+if (!response.ok) {
+  throw new Error(
+    data.detail || `Repository analysis failed (${response.status}).`
+  );
+}
 
       setResult(data);
     } catch (err) {
