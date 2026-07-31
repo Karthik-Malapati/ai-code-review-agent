@@ -161,7 +161,16 @@ async def call_ai(
                 "json_schema": json_schema,
             },
             temperature=0.1,
-            max_tokens=1200,
+            max_tokens=2000,
+            extra_body={
+                "reasoning": {
+                    "effort": "low",
+                    "exclude": True,
+                },
+                "provider": {
+                    "require_parameters": True,
+                },
+            },
         )
 
         content = response.choices[0].message.content
@@ -184,7 +193,16 @@ async def call_ai(
                 "type": "json_object",
             },
             temperature=0.1,
-            max_tokens=1200,
+            max_tokens=2000,
+            extra_body={
+                "reasoning": {
+                    "effort": "low",
+                    "exclude": True,
+                },
+                "provider": {
+                    "require_parameters": True,
+                },
+            },
         )
 
         retry_content = retry_response.choices[0].message.content
