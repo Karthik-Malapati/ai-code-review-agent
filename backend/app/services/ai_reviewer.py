@@ -119,10 +119,33 @@ async def call_ai(prompt: str) -> str:
 
         content = response.choices[0].message.content
 
-        if not content:
-            raise RuntimeError("OpenRouter returned an empty response.")
+        if content:
+            return content.strip()
 
-        return content.strip()
+        retry_response = await openrouter_client.chat.completions.create(
+            model=OPENROUTER_MODEL,
+            messages=[
+                {
+                    "role": "user",
+                    "content": (
+                        prompt + "\n\nIMPORTANT: Return ONLY valid JSON. "
+                        "Do not include markdown or explanations."
+                    ),
+                }
+            ],
+            response_format={
+                "type": "json_object",
+            },
+            temperature=0.1,
+            max_tokens=1200,
+        )
+
+        retry_content = retry_response.choices[0].message.content
+
+        if not retry_content:
+            raise RuntimeError("OpenRouter returned an empty response after retry.")
+
+        return retry_content.strip()
 
     try:
         response = await ollama_client.chat(
