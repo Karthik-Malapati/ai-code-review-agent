@@ -15,7 +15,6 @@ from app.core.config import (
 from app.schemas.repository import RepositorySummary
 from app.schemas.review import CodeReviewResult
 
-
 ollama_client = AsyncClient(
     host=OLLAMA_HOST,
     timeout=120.0,
